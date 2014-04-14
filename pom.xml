@@ -34,6 +34,11 @@
 		</dependency>
 	</dependencies>
 
+	<ciManagement>
+		<system>Jenkins</system>
+		<url>http://jenkins.imagej.net/job/panorama/</url>
+	</ciManagement>
+
 	<scm>
 		<connection>scm:git:git://github.com/fiji/panorama</connection>
 		<developerConnection>scm:git:git@github.com:fiji/panorama</developerConnection>
