@@ -5,12 +5,8 @@ import ij.ImagePlus;
 import ij.gui.GenericDialog;
 import ij.gui.ImageWindow;
 import ij.plugin.PlugIn;
-import ij.process.*;
-
-import mpicbg.ij.InverseTransformMapping;
-import mpicbg.ij.Mapping;
-import mpicbg.models.NoninvertibleModelException;
-import mpicbg.util.Util;
+import ij.process.Blitter;
+import ij.process.ImageProcessor;
 
 import java.awt.Canvas;
 import java.awt.Color;
@@ -22,6 +18,11 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.GeneralPath;
+
+import mpicbg.ij.InverseTransformMapping;
+import mpicbg.ij.Mapping;
+import mpicbg.models.NoninvertibleModelException;
+import mpicbg.util.Util;
 
 public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseWheelListener, MouseListener, MouseMotionListener
 {	
