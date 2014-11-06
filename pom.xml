@@ -18,6 +18,25 @@
 	<name>plugins/panorama_.jar</name>
 	<description></description>
 
+	<scm>
+		<connection>scm:git:git://github.com/fiji/panorama</connection>
+		<developerConnection>scm:git:git@github.com:fiji/panorama</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/fiji/panorama</url>
+	</scm>
+	<ciManagement>
+		<system>Jenkins</system>
+		<url>http://jenkins.imagej.net/job/panorama/</url>
+	</ciManagement>
+
+	<repositories>
+		<!-- NB: for project parent -->
+		<repository>
+			<id>imagej.public</id>
+			<url>http://maven.imagej.net/content/groups/public</url>
+		</repository>
+	</repositories>
+
 	<dependencies>
 		<!-- ImageJ dependencies -->
 		<dependency>
@@ -31,25 +50,5 @@
 			<artifactId>mpicbg</artifactId>
 		</dependency>
 	</dependencies>
-
-	<ciManagement>
-		<system>Jenkins</system>
-		<url>http://jenkins.imagej.net/job/panorama/</url>
-	</ciManagement>
-
-	<scm>
-		<connection>scm:git:git://github.com/fiji/panorama</connection>
-		<developerConnection>scm:git:git@github.com:fiji/panorama</developerConnection>
-		<tag>HEAD</tag>
-		<url>https://github.com/fiji/panorama</url>
-	</scm>
-
-	<repositories>
-		<!-- NB: for project parent -->
-		<repository>
-			<id>imagej.public</id>
-			<url>http://maven.imagej.net/content/groups/public</url>
-		</repository>
-	</repositories>
 
 </project>
