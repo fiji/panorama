@@ -22,10 +22,9 @@ import mpicbg.models.InverseCoordinateTransform;
 import mpicbg.models.NoninvertibleModelException;
 
 /**
- * 
  *
- * @author Stephan Saalfeld <saalfeld@mpi-cbg.de>
- * @version 0.1a
+ *
+ * @author Stephan Saalfeld <saalfelds@janelia.hhmi.org>
  */
 public class HomogeneousMapping< T extends InverseCoordinateTransform > extends InverseTransformMapping< T >
 {
@@ -33,13 +32,13 @@ public class HomogeneousMapping< T extends InverseCoordinateTransform > extends 
 	{
 		super( t );
 	}
-	
-	//@Override
+
+	@Override
 	public void map(
 			final ImageProcessor source,
 			final ImageProcessor target )
 	{
-		final float[] t = new float[ 3 ];
+		final double[] t = new double[ 3 ];
 		final int sw = source.getWidth() - 1;
 		final int sh = source.getHeight() - 1;
 		final int tw = target.getWidth();
@@ -55,7 +54,7 @@ public class HomogeneousMapping< T extends InverseCoordinateTransform > extends 
 				try
 				{
 					transform.applyInverseInPlace( t );
-					final float h = t[ 2 ];
+					final double h = t[ 2 ];
 					final int tx = ( int )( t[ 0 ] + 0.5f );
 					final int ty = ( int )( t[ 1 ] + 0.5f );
 					if (
@@ -66,17 +65,17 @@ public class HomogeneousMapping< T extends InverseCoordinateTransform > extends 
 							ty <= sh )
 						target.set( row + x, source.getPixel( tx, ty ) );
 				}
-				catch ( NoninvertibleModelException e ){}
+				catch ( final NoninvertibleModelException e ){}
 			}
 		}
 	}
-	
-	//@Override
+
+	@Override
 	public void mapInterpolated(
 			final ImageProcessor source,
 			final ImageProcessor target )
 	{
-		final float[] t = new float[ 3 ];
+		final double[] t = new double[ 3 ];
 		final int sw = source.getWidth() - 1;
 		final int sh = source.getHeight() - 1;
 		final int tw = target.getWidth();
@@ -91,9 +90,9 @@ public class HomogeneousMapping< T extends InverseCoordinateTransform > extends 
 				try
 				{
 					transform.applyInverseInPlace( t );
-					final float h = t[ 2 ];
-					final float tx = t[ 0 ];
-					final float ty = t[ 1 ];
+					final double h = t[ 2 ];
+					final double tx = t[ 0 ];
+					final double ty = t[ 1 ];
 					if (
 							h >= 0 &&
 							tx >= 0 &&
@@ -102,7 +101,7 @@ public class HomogeneousMapping< T extends InverseCoordinateTransform > extends 
 							ty <= sh )
 						target.putPixel( x, y, source.getPixelInterpolated( tx, ty ) );
 				}
-				catch ( NoninvertibleModelException e ){}
+				catch ( final NoninvertibleModelException e ){}
 			}
 		}
 	}

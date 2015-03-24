@@ -22,37 +22,36 @@ import java.awt.geom.GeneralPath;
 import mpicbg.ij.InverseTransformMapping;
 import mpicbg.ij.Mapping;
 import mpicbg.models.NoninvertibleModelException;
-import mpicbg.util.Util;
 
 public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseWheelListener, MouseListener, MouseMotionListener
-{	
+{
 	final static private String NL = System.getProperty( "line.separator" );
-	
+
 	final private class GUI
 	{
 		final private ImageWindow window;
 		final private Canvas canvas;
-		
+
 		final private ImageJ ij;
-		
+
 		/* backup */
 		private KeyListener[] windowKeyListeners;
 		private KeyListener[] canvasKeyListeners;
 		private KeyListener[] ijKeyListeners;
-		
+
 		private MouseListener[] canvasMouseListeners;
 		private MouseMotionListener[] canvasMouseMotionListeners;
-		
+
 		private MouseWheelListener[] windowMouseWheelListeners;
-		
+
 		GUI( final ImagePlus imp )
 		{
 			window = imp.getWindow();
 			canvas = imp.getCanvas();
-			
+
 			ij = IJ.getInstance();
 		}
-		
+
 		/**
 		 * Close the window
 		 */
@@ -60,7 +59,7 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 		{
 			window.close();
 		}
-		
+
 		/**
 		 * Add new event handlers.
 		 */
@@ -68,16 +67,16 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 		{
 			canvas.addKeyListener( EquirectangularPanorama_View.this );
 			window.addKeyListener( EquirectangularPanorama_View.this );
-			
+
 			canvas.addMouseMotionListener( EquirectangularPanorama_View.this );
-			
+
 			canvas.addMouseListener( EquirectangularPanorama_View.this );
-			
+
 			ij.addKeyListener( EquirectangularPanorama_View.this );
-			
+
 			window.addMouseWheelListener( EquirectangularPanorama_View.this );
 		}
-		
+
 		/**
 		 * Backup old event handlers for restore.
 		 */
@@ -89,9 +88,9 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 			canvasMouseListeners = canvas.getMouseListeners();
 			canvasMouseMotionListeners = canvas.getMouseMotionListeners();
 			windowMouseWheelListeners = window.getMouseWheelListeners();
-			clearGui();	
+			clearGui();
 		}
-		
+
 		/**
 		 * Restore the previously active Event handlers.
 		 */
@@ -111,7 +110,7 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 			for ( final MouseWheelListener l : windowMouseWheelListeners )
 				window.addMouseWheelListener( l );
 		}
-		
+
 		/**
 		 * Remove both ours and the backed up event handlers.
 		 */
@@ -129,7 +128,7 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 				canvas.removeMouseMotionListener( l );
 			for ( final MouseWheelListener l : windowMouseWheelListeners )
 				window.removeMouseWheelListener( l );
-			
+
 			canvas.removeKeyListener( EquirectangularPanorama_View.this );
 			window.removeKeyListener( EquirectangularPanorama_View.this );
 			ij.removeKeyListener( EquirectangularPanorama_View.this );
@@ -138,7 +137,7 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 			window.removeMouseWheelListener( EquirectangularPanorama_View.this );
 		}
 	}
-	
+
 	final private class MappingThread extends Thread
 	{
 		final protected ImagePlus impSource;
@@ -146,14 +145,14 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 		final protected ImageProcessor source;
 		final protected ImageProcessor target;
 		final protected ImageProcessor temp;
-		final protected Mapping< EquirectangularProjection > mapping;
-		final protected EquirectangularProjection p;
+		final protected Mapping< EquirectangularProjection > eqiMapping;
+		final protected EquirectangularProjection projection;
 		private boolean interpolate = true;
 		private boolean visualize = true;
 		private boolean pleaseRepaint;
 		private boolean keepPainting;
-		private float dt = 1;
-		
+		private double dt = 1;
+
 		public MappingThread(
 				final ImagePlus impSource,
 				final ImagePlus impTarget,
@@ -168,11 +167,11 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 			this.target = target;
 			this.temp = target.createProcessor( target.getWidth(), target.getHeight() );
 			temp.snapshot();
-			this.mapping = mapping;
-			this.p = p;
+			this.eqiMapping = mapping;
+			this.projection = p;
 			this.setName( "MappingThread" );
 		}
-		
+
 		@Override
 		final public void run()
 		{
@@ -187,28 +186,28 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 				if ( b )
 				{
 					final long t = System.currentTimeMillis();
-				        final float PI2 = ( float )( Math.PI * Math.PI );
+					final double PI2 = Math.PI * Math.PI;
 					lambda = Util.mod( lambda + dt * dLambda, PI2 );
 					phi = Util.mod( phi + dt * dPhi, PI2 );
-					
-					p.pan( lambda );
-					p.tilt( phi );
-					
-					mapping.getTransform().set( p );
+
+					projection.pan( lambda );
+					projection.tilt( phi );
+
+					eqiMapping.getTransform().set( projection );
 					temp.reset();
 					if ( interpolate )
-						mapping.mapInterpolated( source, temp );
+						eqiMapping.mapInterpolated( source, temp );
 					else
-						mapping.map( source, temp );
-					
+						eqiMapping.map( source, temp );
+
 					final Object targetPixels = target.getPixels();
 					target.setPixels( temp.getPixels() );
 					temp.setPixels( targetPixels );
 					impTarget.updateAndDraw();
-					
+
 					if ( visualize )
-						visualize( impSource, temp.getWidth(), temp.getHeight(), p );
-					
+						visualize( impSource, temp.getWidth(), temp.getHeight(), projection );
+
 					dt = ( System.currentTimeMillis() - t ) / 1000f;
 				}
 				synchronized ( this )
@@ -217,12 +216,12 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 					{
 						if ( !pleaseRepaint ) wait();
 					}
-					catch ( InterruptedException e ){}
+					catch ( final InterruptedException e ){}
 				}
 			}
 		}
-		
-		final public void repaint( final boolean keepPainting )
+
+		final public void repaint( @SuppressWarnings( "hiding" ) final boolean keepPainting )
 		{
 			synchronized ( this )
 			{
@@ -231,138 +230,139 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 				notify();
 			}
 		}
-		
+
 		final public void toggleInterpolation()
 		{
 			interpolate = !interpolate;
 		}
-		
+
 		final public void toggleVisualization()
 		{
 			visualize = !visualize;
 		}
 	}
-	
+
 	private ImagePlus imp;
 	private ImageProcessor ip;
 	private ImageProcessor ipSource;
 	private GUI gui;
-	
+
 	static private int width = 400;
 	static private int height = 300;
-	static private float minLambda = 0;
-	static private float minPhi = 0;
-	static private float hfov = 2 * ( float )Math.PI;
-	static private float vfov = ( float )Math.PI;
-	
-	
+	static private double minLambda = 0;
+	static private double minPhi = 0;
+	static private double hfov = 2.0 * Math.PI;
+	static private double vfov = Math.PI;
+
+
 	final private EquirectangularProjection p = new EquirectangularProjection();
-	final static private float step = ( float )Math.PI / 180;
+	final static private double step = Math.PI / 180.0;
 	final private Mapping< EquirectangularProjection > mapping = new InverseTransformMapping< EquirectangularProjection >( p.clone() );
-	
-	private float lambda = 0;
-	private float phi = 0;
-	private float dLambda = 0;
-	private float dPhi = 0;
-	
+
+	private double lambda = 0;
+	private double phi = 0;
+	private double dLambda = 0;
+	private double dPhi = 0;
+
 	/* coordinates where mouse dragging started and the drag distance */
 	private int oX, oY, dX, dY;
-	
+
 	final static private boolean setup( final ImagePlus imp )
 	{
 		final GenericDialog gd = new GenericDialog( "Panorama Viewer" );
-		
+
 		gd.addMessage( "Panorama" );
 		gd.addNumericField( "min lambda : ", minLambda / Math.PI * 180, 2 );
 		gd.addNumericField( "min phi : ", minPhi / Math.PI * 180, 2 );
 		gd.addNumericField( "hfov : ", hfov / Math.PI * 180, 2 );
-		gd.addNumericField( "vfov : ", vfov / Math.PI * 180, 2 );	
-		
+		gd.addNumericField( "vfov : ", vfov / Math.PI * 180, 2 );
+
 		gd.addMessage( "Viewer Window" );
 		gd.addNumericField( "width : ", width, 0 );
 		gd.addNumericField( "height : ", height, 0 );
-		
+
 //		gd.addHelp( "http://fiji.sc/wiki/index.php/Enhance_Local_Contrast_(CLAHE)" );
-		
+
 		gd.showDialog();
-		
+
 		if ( gd.wasCanceled() ) return false;
-		
-		minLambda = ( float )( Util.mod( ( float )gd.getNextNumber(), 360 ) / 180 * Math.PI );
-		minPhi = ( float )( Util.mod( ( float )gd.getNextNumber(), 180 ) / 180 * Math.PI );
-		hfov = Math.min( ( float )( Math.PI * 2 - minLambda ), ( float )( Util.mod( ( float )gd.getNextNumber(), 360 ) / 180 * Math.PI ) );
-		vfov = Math.min( ( float )( Math.PI - minPhi ), ( float )( Util.mod( ( float )gd.getNextNumber(), 180 ) / 180 * Math.PI ) );
-		
-		if ( hfov == 0 ) hfov = ( float )( 2 * Math.PI );
-		if ( vfov == 0 ) vfov = ( float )Math.PI;
-		
+
+		minLambda = Util.mod( gd.getNextNumber(), 360.0 ) / 180.0 * Math.PI;
+		minPhi = Util.mod( gd.getNextNumber(), 180.0 ) / 180 * Math.PI;
+		hfov = Math.min( Math.PI * 2 - minLambda, Util.mod( gd.getNextNumber(), 360.0 ) / 180.0 * Math.PI );
+		vfov = Math.min( Math.PI - minPhi, Util.mod( gd.getNextNumber(), 180.0 ) / 180.0 * Math.PI );
+
+		if ( hfov == 0 ) hfov = 2.0 * Math.PI;
+		if ( vfov == 0 ) vfov = Math.PI;
+
 		System.out.println( minLambda + " " + minPhi + " " + hfov + " " + vfov );
-		
+
 		width = ( int )gd.getNextNumber();
 		height = ( int )gd.getNextNumber();
-		
+
 		return true;
 	}
 
 	private MappingThread painter;
-	
-	public void run( String arg )
+
+	@Override
+    public void run( final String arg )
     {
 		imp = IJ.getImage();
-		
+
 		if ( imp == null )
 		{
 			IJ.error( "No image open." );
 			return;
 		}
-		
+
 		if ( !setup( imp ) )
 			return;
-		
+
 		run( imp, width, height, minLambda, minPhi, hfov, vfov );
     }
-	
+
 	final public void run(
 			final ImagePlus imp,
 			final int width,
 			final int height,
-			final float minLambda,
-			final float minPhi,
-			final float hfov,
-			final float vfov )
+			final double minLambda,
+			final double minPhi,
+			final double hfov,
+			final double vfov )
 	{
 		ip = imp.getProcessor().createProcessor( width, height );
 		final ImagePlus impViewer = new ImagePlus( "Panorama View", ip );
-		
+
 		/* initialize projection */
 		p.setMinLambda( minLambda );
 		p.setMinPhi( minPhi );
-		p.setLambdaPiScale( ( float )Math.PI / hfov * ( imp.getWidth() ) );
-		p.setPhiPiScale( ( float )Math.PI / vfov * ( imp.getHeight() - 1 ) );
+		p.setLambdaPiScale( Math.PI / hfov * ( imp.getWidth() ) );
+		p.setPhiPiScale( Math.PI / vfov * ( imp.getHeight() - 1 ) );
 		p.setTargetWidth( ip.getWidth() );
 		p.setTargetHeight( ip.getHeight() );
 		p.setF( 0.5f );
-		
+
 		/* prepare extended image */
 		ipSource = ip.createProcessor(
-				hfov == ( float )( 2 * Math.PI ) ? imp.getWidth() + 1 : imp.getWidth(),
-				vfov == ( float )Math.PI ? imp.getHeight() + 1 : imp.getHeight() );
+				hfov == 2.0 * Math.PI ? imp.getWidth() + 1 : imp.getWidth(),
+				vfov == Math.PI ? imp.getHeight() + 1 : imp.getHeight() );
 		prepareExtendedImage( imp.getProcessor(), ipSource );
-		
+
 		/* instantiate and run painter */
 		painter = new MappingThread( imp, impViewer, ipSource, ip, mapping, p );
-		
+
 		impViewer.show();
-		
+
 		gui = new GUI( impViewer );
-		
+
 		gui.backupGui();
 		gui.takeOverGui();
-		
+
 		painter.start();
 		update( false );
     }
-	
+
 	final static private void prepareExtendedImage(
 			final ImageProcessor source,
 			final ImageProcessor target )
@@ -377,13 +377,14 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 			target.copyBits( source, 0, 1, Blitter.COPY );
 		target.copyBits( source, 0, 0, Blitter.COPY );
 	}
-	
+
 	final private void update( final boolean keepPainting )
 	{
 		painter.repaint( keepPainting );
 	}
-	
-	public void keyPressed( KeyEvent e )
+
+	@Override
+    public void keyPressed( final KeyEvent e )
 	{
 		if ( e.getKeyCode() == KeyEvent.VK_ESCAPE || e.getKeyCode() == KeyEvent.VK_ENTER )
 		{
@@ -395,17 +396,17 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 		}
 		else if ( e.getKeyCode() == KeyEvent.VK_SHIFT )
 		{
-			dLambda *= 10;
-			dPhi *= 10;
+			dLambda *= 10.0;
+			dPhi *= 10.0;
 		}
 		else if ( e.getKeyCode() == KeyEvent.VK_CONTROL )
 		{
-			dLambda /= 10;
-			dPhi /= 10;
+			dLambda /= 10.0;
+			dPhi /= 10.0;
 		}
 		else
 		{
-			final float v = keyModfiedSpeed( e.getModifiersEx() );
+			final double v = keyModfiedSpeed( e.getModifiersEx() );
 			if ( e.getKeyCode() == KeyEvent.VK_LEFT )
 			{
 				p.pan( -v * step );
@@ -428,12 +429,12 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 			}
 			else if ( e.getKeyCode() == KeyEvent.VK_PLUS || e.getKeyCode() == KeyEvent.VK_EQUALS )
 			{
-				p.setF( p.getF() * ( 1 + 0.1f * v ) );
+				p.setF( p.getF() * ( 1 + 0.1 * v ) );
 				update( false );
 			}
 			else if ( e.getKeyCode() == KeyEvent.VK_MINUS )
 			{
-				p.setF( p.getF() / ( 1 + 0.1f * v ) );
+				p.setF( p.getF() / ( 1 + 0.1 * v ) );
 				update( false );
 			}
 			else if ( e.getKeyCode() == KeyEvent.VK_SPACE )
@@ -472,7 +473,7 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 		}
 	}
 
-	final private float keyModfiedSpeed( final int modifiers )
+	final private double keyModfiedSpeed( final int modifiers )
 	{
 		if ( ( modifiers & KeyEvent.SHIFT_DOWN_MASK ) != 0 )
 			return 10;
@@ -482,7 +483,8 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 			return 1;
 	}
 
-	public void keyReleased( final KeyEvent e )
+	@Override
+    public void keyReleased( final KeyEvent e )
 	{
 		if ( e.getKeyCode() == KeyEvent.VK_SHIFT )
 		{
@@ -495,19 +497,22 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 			dPhi *= 10;
 		}
 	}
-	public void keyTyped( final KeyEvent e ){}
-	
-	public void mouseWheelMoved( final MouseWheelEvent e )
+	@Override
+    public void keyTyped( final KeyEvent e ){}
+
+	@Override
+    public void mouseWheelMoved( final MouseWheelEvent e )
 	{
-		final float v = keyModfiedSpeed( e.getModifiersEx() );
-		int s = e.getWheelRotation();
-		p.setF( p.getF() * ( 1 - 0.05f * s * v ) );
+		final double v = keyModfiedSpeed( e.getModifiersEx() );
+		final int s = e.getWheelRotation();
+		p.setF( p.getF() * ( 1 - 0.05 * s * v ) );
 		update( false );
 	}
 
-	public void mouseDragged( final MouseEvent e )
+	@Override
+    public void mouseDragged( final MouseEvent e )
 	{
-		final float v = 0.1f * step * keyModfiedSpeed( e.getModifiersEx() );
+		final double v = 0.1 * step * keyModfiedSpeed( e.getModifiersEx() );
 		dX = oX - e.getX();
 		dY = oY - e.getY();
 		dLambda = -v * dX;
@@ -515,22 +520,28 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 		update( true );
 	}
 
-	public void mouseMoved( MouseEvent e ){}
-	public void mouseClicked( MouseEvent e ){}
-	public void mouseEntered( MouseEvent e ){}
-	public void mouseExited( MouseEvent e ){}
-	public void mouseReleased( MouseEvent e )
+	@Override
+    public void mouseMoved( final MouseEvent e ){}
+	@Override
+    public void mouseClicked( final MouseEvent e ){}
+	@Override
+    public void mouseEntered( final MouseEvent e ){}
+	@Override
+    public void mouseExited( final MouseEvent e ){}
+	@Override
+    public void mouseReleased( final MouseEvent e )
 	{
 		dLambda = dPhi = 0;
 		update( false );
 	}
-	public void mousePressed( MouseEvent e )
+	@Override
+    public void mousePressed( final MouseEvent e )
 	{
 		oX = e.getX();
 		oY = e.getY();
 	}
-	
-	
+
+
 	final static private void visualize(
 			final ImagePlus imp,
 			final int w,
@@ -539,18 +550,18 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 	{
 		try
 		{
-			final float maxD = imp.getWidth() / 2;
+			final double maxD = imp.getWidth() / 2;
 			final GeneralPath gp = new GeneralPath();
-			final float[] l = new float[]{ 0, 0 };
+			final double[] l = new double[]{ 0, 0 };
 			p.applyInverseInPlace( l );
-			float x0 = l[ 0 ];
+			double x0 = l[ 0 ];
 			gp.moveTo( l[ 0 ], l[ 1 ] );
 			for ( int x = 1; x < w; ++x )
 			{
 				l[ 0 ] = x;
 				l[ 1 ] = 0;
 				p.applyInverseInPlace( l );
-				final float dx = l[ 0 ] - x0;
+				final double dx = l[ 0 ] - x0;
 				if ( dx > maxD )
 				{
 					gp.lineTo( l[ 0 ] - imp.getWidth(), l[ 1 ] );
@@ -561,7 +572,7 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 					gp.lineTo( l[ 0 ] + imp.getWidth(), l[ 1 ] );
 					gp.moveTo( l[ 0 ], l[ 1 ] );
 				}
-				else				 
+				else
 					gp.lineTo( l[ 0 ], l[ 1 ] );
 				x0 = l[ 0 ];
 			}
@@ -570,7 +581,7 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 				l[ 0 ] = w - 1;
 				l[ 1 ] = y;
 				p.applyInverseInPlace( l );
-				final float dx = l[ 0 ] - x0;
+				final double dx = l[ 0 ] - x0;
 				if ( dx > maxD )
 				{
 					gp.lineTo( l[ 0 ] - imp.getWidth(), l[ 1 ] );
@@ -581,7 +592,7 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 					gp.lineTo( l[ 0 ] + imp.getWidth(), l[ 1 ] );
 					gp.moveTo( l[ 0 ], l[ 1 ] );
 				}
-				else				 
+				else
 					gp.lineTo( l[ 0 ], l[ 1 ] );
 				x0 = l[ 0 ];
 			}
@@ -590,7 +601,7 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 				l[ 0 ] = x;
 				l[ 1 ] = h - 1;
 				p.applyInverseInPlace( l );
-				final float dx = l[ 0 ] - x0;
+				final double dx = l[ 0 ] - x0;
 				if ( dx > maxD )
 				{
 					gp.lineTo( l[ 0 ] - imp.getWidth(), l[ 1 ] );
@@ -601,7 +612,7 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 					gp.lineTo( l[ 0 ] + imp.getWidth(), l[ 1 ] );
 					gp.moveTo( l[ 0 ], l[ 1 ] );
 				}
-				else				 
+				else
 					gp.lineTo( l[ 0 ], l[ 1 ] );
 				x0 = l[ 0 ];
 			}
@@ -610,7 +621,7 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 				l[ 0 ] = 0;
 				l[ 1 ] = y;
 				p.applyInverseInPlace( l );
-				final float dx = l[ 0 ] - x0;
+				final double dx = l[ 0 ] - x0;
 				if ( dx > maxD )
 				{
 					gp.lineTo( l[ 0 ] - imp.getWidth(), l[ 1 ] );
@@ -621,13 +632,13 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 					gp.lineTo( l[ 0 ] + imp.getWidth(), l[ 1 ] );
 					gp.moveTo( l[ 0 ], l[ 1 ] );
 				}
-				else				 
+				else
 					gp.lineTo( l[ 0 ], l[ 1 ] );
 				x0 = l[ 0 ];
 			}
 			imp.getCanvas().setDisplayList( gp, Color.YELLOW, null );
 			imp.updateAndDraw();
 		}
-		catch ( NoninvertibleModelException e ){}
+		catch ( final NoninvertibleModelException e ){}
 	}
 }
