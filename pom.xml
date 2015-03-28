@@ -13,7 +13,7 @@
 	</parent>
 
 	<artifactId>panorama_</artifactId>
-	<version>3.0.0</version>
+	<version>3.0.1-SNAPSHOT</version>
 
 	<name>plugins/panorama_.jar</name>
 	<description></description>
