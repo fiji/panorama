@@ -3,18 +3,31 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>sc.fiji</groupId>
-		<artifactId>pom-fiji</artifactId>
+		<groupId>org.scijava</groupId>
+		<artifactId>pom-scijava</artifactId>
 		<relativePath />
-		<version>16.0.0</version>
+		<version>14.0.0</version>
 	</parent>
 
+	<groupId>sc.fiji</groupId>
 	<artifactId>panorama_</artifactId>
 	<version>3.0.2-SNAPSHOT</version>
 
-	<name>plugins/panorama_.jar</name>
-	<description />
+	<name>panorama</name>
+	<description>panorama plugin for Fiji.</description>
+	<url>https://imagej.net/panorama</url>
 	<inceptionYear>2011</inceptionYear>
+	<organization>
+		<name>Fiji</name>
+		<url>https://fiji.sc/</url>
+	</organization>
+	<licenses>
+		<license>
+			<name>GNU General Public License v3+</name>
+			<url>https://www.gnu.org/licenses/gpl.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
 
 	<developers>
 		<developer>
@@ -57,6 +70,13 @@
 		</contributor>
 	</contributors>
 
+	<mailingLists>
+		<mailingList>
+			<name>ImageJ Forum</name>
+			<archive>http://forum.imagej.net/</archive>
+		</mailingList>
+	</mailingLists>
+
 	<scm>
 		<connection>scm:git:git://github.com/fiji/panorama</connection>
 		<developerConnection>scm:git:git@github.com:fiji/panorama</developerConnection>
@@ -71,6 +91,13 @@
 		<system>Jenkins</system>
 		<url>http://jenkins.imagej.net/job/panorama/</url>
 	</ciManagement>
+
+	<properties>
+		<package-name>mpicbg.panorama</package-name>
+		<license.licenseName>gpl_v3</license.licenseName>
+		<license.copyrightOwners>Fiji developers.</license.copyrightOwners>
+		<license.projectName>Fiji distribution of ImageJ for the life sciences.</license.projectName>
+	</properties>
 
 	<repositories>
 		<!-- NB: for project parent -->
