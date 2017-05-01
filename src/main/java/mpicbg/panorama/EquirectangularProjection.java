@@ -7,7 +7,7 @@ import mpicbg.models.NoninvertibleModelException;
  * latitude). The rectlinear frame is defined by the
  * {@link #getF() focal length}, its dimensions in #get<i>x</i> and <i>y</i>
  *
- * @author Stephan Saalfeld <saalfelds@janelia.hhmi.org>
+ * @author Stephan Saalfeld
  */
 public class EquirectangularProjection extends PanoramaCamera< EquirectangularProjection >
 {

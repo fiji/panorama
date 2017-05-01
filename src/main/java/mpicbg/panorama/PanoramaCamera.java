@@ -7,7 +7,7 @@ import mpicbg.util.Matrix3x3;
  * Essentially, a simplified homography that allows panning (&lambda;), tilting
  * (&phi;) and and zooming (f) only.
  *
- * @author Stephan Saalfeld <saalfelds@janelia.hhmi.org>
+ * @author Stephan Saalfeld
  */
 public abstract class PanoramaCamera< T extends PanoramaCamera< T > > implements InvertibleCoordinateTransform
 {

@@ -9,7 +9,7 @@ public class Util
 	 *
 	 * @param a
 	 * @param mod
-	 * @return 0 <= b < mod
+	 * @return 0 &lt;= b &lt; mod
 	 */
 	final static public double mod( final double a, final double mod )
 	{

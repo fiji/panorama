@@ -24,7 +24,7 @@ import mpicbg.models.NoninvertibleModelException;
 /**
  *
  *
- * @author Stephan Saalfeld <saalfelds@janelia.hhmi.org>
+ * @author Stephan Saalfeld
  */
 public class HomogeneousMapping< T extends InverseCoordinateTransform > extends InverseTransformMapping< T >
 {
