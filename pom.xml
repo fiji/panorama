@@ -78,7 +78,7 @@
 	</mailingLists>
 
 	<scm>
-		<connection>scm:git:git://github.com/fiji/panorama</connection>
+		<connection>scm:git:https://github.com/fiji/panorama</connection>
 		<developerConnection>scm:git:git@github.com:fiji/panorama</developerConnection>
 		<tag>HEAD</tag>
 		<url>https://github.com/fiji/panorama</url>
